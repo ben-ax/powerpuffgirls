@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profit with Purpose: The OsloKollega Model</title>
+    <style>
+        /* --- RESET & BASICS --- */
+        :root {
+            --primary: #2c3e50;
+            --primary-light: #34495e;
+            --accent: #e74c3c;
+            --accent-kpi: #3498db; /* Professional blue for the KPI dashboard */
+            --accent-dim: rgba(231, 76, 60, 0.3);
+            --revenue: #2ecc71; 
+            --bg-dark: #121212; 
+            --text-light: #ecf0f1;
+            --glass: rgba(10, 10, 10, 0.95);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- FULLSCREEN BUTTON --- */
+        #fullscreen-btn {
+            position: absolute;
+            top: 20px; 
+            right: 20px;
+            background: rgba(0,0,0,0.5); 
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            width: 45px; 
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5rem;
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            transition: background 0.2s, transform 0.2s;
+            z-index: 1000;
+        }
+
+        #fullscreen-btn:hover { 
+            background: rgba(0,0,0,0.8); 
+            transform: scale(1.1); 
+        }
+
+        /* --- PRESENTATION SCREEN MANAGER --- */
+        .presentation-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease-in-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+            z-index: 1;
+        }
+
+        .presentation-screen.active-screen {
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 5;
+        }
+
+        .slide-bg {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url('background.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .presentation-screen h1 {
+            font-size: 4.5rem;
+            margin-bottom: 20px;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.8);
+        }
+
+        .presenter-names {
+            font-size: 1.5rem;
+            color: var(--accent);
+            margin-bottom: 50px;
+            font-weight: 700;
+        }
+
+        .hint-text {
+            position: absolute;
+            bottom: 30px;
+            font-size: 1rem;
+            color: rgba(255,255,255,0.4);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* --- AGENDA CARD --- */
+        .agenda-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 50px;
+            max-width: 900px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            text-align: left;
+        }
+
+        .agenda-card h2 {
+            font-size: 2.5rem;
+            color: var(--accent);
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .agenda-card p {
+            font-size: 1.3rem;
+            line-height: 1.8;
+            color: rgba(255,255,255,0.9);
+            margin: 0;
+        }
+
+        /* --- STORY SHOWCASE (MAIN VIEW) --- */
+        #story-viewport {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; 
+            align-items: center;
+            background: rgba(0,0,0,0.2); 
+            transition: filter 0.5s var(--ease), transform 0.8s var(--ease);
+        }
+
+        #story-viewport.blur {
+            filter: blur(8px) brightness(0.5);
+            transform: scale(1.05);
+            pointer-events: none;
+        }
+
+        #scene-intro-stories {
+            width: 90%;
+            max-width: 1400px;
+            text-align: left;
+            margin-bottom: 15px; 
+            display: block; 
+            z-index: 15;
+        }
+
+        #scene-intro-stories h1 {
+            font-size: 2.8rem; 
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            letter-spacing: -1px;
+            color: white;
+        }
+
+        #scene-intro-stories p {
+            font-size: 1.1rem;
+            color: rgba(255,255,255,0.8);
+            margin-top: 5px;
+            max-width: 800px;
+            line-height: 1.5;
+        }
+
+        #story-grid {
+            display: flex;
+            width: 100vw; 
+            height: 75vh; 
+            gap: 1px; 
+            z-index: 10;
+            transition: all 0.5s var(--ease);
+        }
+
+        .story-item {
+            position: relative;
+            flex: 1; 
+            height: 100%;
+            overflow: hidden;
+            border-radius: 0; 
+            cursor: pointer; 
+            transition: flex 0.6s var(--ease), filter 0.6s var(--ease);
+            border: 0;
+        }
+
+        #story-grid:hover .story-item {
+            flex: 0.8; 
+            filter: grayscale(100%) brightness(0.2);
+        }
+
+        #story-grid .story-item:hover {
+            flex: 2.2; 
+            filter: grayscale(0%) brightness(1.2);
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            z-index: 2; 
+        }
+
+        .story-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s var(--ease);
+        }
+
+        .story-item:hover img {
+            transform: scale(1.03);
+        }
+
+        .presenter-name-top {
+            position: absolute;
+            top: 20px; left: 0; width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .story-label {
+            position: absolute;
+            bottom: 0; left: 0; width: 100%;
+            padding: 60px 25px 30px 25px;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 30%, rgba(0,0,0,0) 100%);
+            text-align: left;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .story-label h3 {
+            margin: 0;
+            font-size: 1.6rem;
+            color: white;
+            font-weight: 700;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            line-height: 1.1;
+        }
+
+        .story-label p {
+            margin: 8px 0 0 0;
+            font-size: 0.95rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+            opacity: 0.9;
+        }
+
+        /* --- CONTENT PANELS --- */
+        .content-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            width: 90%;
+            max-width: 1200px;
+            height: 80%;
+            background: var(--glass);
+            backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 20px 70px rgba(0,0,0,0.9);
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            overflow: hidden;
+            text-align: left;
+        }
+
+        .content-panel.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        #panel-financials, #panel-kpi {
+            grid-template-columns: 1fr;
+        }
+        
+        #panel-financials .panel-text, #panel-kpi .panel-text {
+            padding: 40px 60px;
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .panel-image {
+            background-size: cover;
+            background-position: center;
+        }
+
+        .panel-text {
+            padding: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            overflow-y: auto; 
+        }
+
+        .panel-text h2 {
+            font-size: 2.5rem;
+            color: white;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .panel-text p.panel-subtitle {
+            font-size: 1.05rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            color: rgba(255,255,255,0.9);
+        }
+
+        /* --- VERTICAL TIMELINES --- */
+        .timeline-container {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px 25px; 
+            margin-bottom: 15px; 
+        }
+
+        .timeline-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.8);
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .timeline {
+            border-left: 2px solid rgba(255, 255, 255, 0.2);
+            margin-left: 10px;
+            padding-left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px; 
+        }
+
+        .timeline-node {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .timeline-node::before {
+            content: '';
+            position: absolute;
+            left: -27px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .timeline-node.historical::before {
+            background: rgba(255,255,255,0.4);
+            box-shadow: none;
+        }
+
+        .timeline-year {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .timeline-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: white;
+            text-align: right;
+            max-width: 60%;
+        }
+
+        .timeline-node:not(.historical) .timeline-year,
+        .timeline-node:not(.historical) .timeline-value {
+            color: var(--accent);
+        }
+
+        /* --- FINANCIAL DASHBOARD SPECIFIC --- */
+        .fin-dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .fin-column {
+            background: rgba(0,0,0,0.4);
+            border-radius: 12px;
+            padding: 25px;
+            border-top: 4px solid var(--accent); 
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .fin-column.revenue {
+            border-top: 4px solid var(--revenue); 
+        }
+
+        .fin-column h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.3rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 15px;
+        }
+
+        .fin-column h3 span.total {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .fin-column.revenue h3 span.total {
+            color: var(--revenue);
+        }
+
+        .fin-item {
+            margin-bottom: 18px;
+        }
+
+        .fin-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .fin-item h4 {
+            margin: 0 0 5px 0;
+            font-size: 1.05rem;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .fin-item p {
+            margin: 0 !important;
+            font-size: 0.85rem !important;
+            color: rgba(255,255,255,0.7) !important;
+            line-height: 1.4 !important;
+        }
+
+        /* --- KPI DASHBOARD SPECIFIC --- */
+        .kpi-dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .kpi-column h3 {
+            color: var(--accent-kpi);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            font-size: 1.15rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .social-kpi-block {
+            margin-bottom: 20px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            margin-bottom: 6px;
+            font-size: 1rem;
+            color: white;
+        }
+
+        .progress-bg {
+            width: 100%;
+            height: 10px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-kpi);
+            width: 0%; 
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .social-kpi-block p.explanation {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.7);
+            margin-top: 8px;
+            line-height: 1.4;
+            margin-bottom: 0;
+        }
+
+        .kpi-detail-card {
+            background: rgba(0,0,0,0.4);
+            border-left: 4px solid var(--accent-kpi);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .kpi-detail-card .kpi-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-kpi);
+            min-width: 80px;
+            text-align: center;
+            line-height: 1;
+            margin-top: 2px;
+        }
+
+        .kpi-detail-card .kpi-value span.suffix {
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-left: 2px;
+        }
+
+        .kpi-detail-card .kpi-info h4 {
+            margin: 0 0 4px 0;
+            font-size: 1rem;
+            color: white;
+        }
+
+        .kpi-detail-card .kpi-info p {
+            margin: 0;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.4;
+        }
+
+        .kpi-review-card {
+            background: rgba(0,0,0,0.4);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #f1c40f;
+            margin-top: 15px;
+        }
+
+        .kpi-review-card .stars {
+            color: #f1c40f;
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+            letter-spacing: 2px;
+        }
+
+        .kpi-review-card .review-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: white;
+            margin-bottom: 4px;
+        }
+
+        .kpi-review-card p {
+            font-size: 0.85rem;
+            margin: 0;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.4;
+        }
+
+        .highlight-box {
+            margin-top: 15px; 
+            padding: 15px; 
+            background: rgba(231, 76, 60, 0.15); 
+            border-left: 4px solid var(--accent); 
+            border-radius: 8px;
+        }
+
+        .close-panel {
+            position: absolute;
+            top: 20px; right: 20px;
+            background: rgba(0,0,0,0.5); 
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            width: 45px; height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5rem;
+            display: flex; justify-content: center; align-items: center;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .close-panel:hover { background: rgba(0,0,0,0.8); transform: scale(1.1); }
+        .panel-text::-webkit-scrollbar { width: 8px; }
+        .panel-text::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); }
+        .panel-text::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 4px; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <button id="fullscreen-btn" title="Toggle Fullscreen">⛶</button>
+
+    <div id="screen-intro" class="presentation-screen slide-bg active-screen">
+        <h1>Profit with Purpose</h1>
+        <div class="presenter-names">The OsloKollega & Børsparken Model</div>
+        <div class="hint-text">Press Spacebar to Begin</div>
+    </div>
+
+    <div id="screen-agenda" class="presentation-screen slide-bg">
+        <div class="agenda-card">
+            <h2>The Hospitality Problem</h2>
+            <p>
+                Hotels lose money because staff quit often, and hiring is expensive. Instead of trying to <i>buy</i> talent, we need to <i>build</i> it. By working with a support organization, we create a clear training program. This builds a loyal team and saves money.
+            </p>
+        </div>
+        <div class="hint-text">Press Spacebar to Continue</div>
+    </div>
+
+    <div id="screen-stories" class="presentation-screen slide-bg">
+        
+        <div id="story-viewport">
+
+            <div id="scene-intro-stories">
+                <h1>The Inclusion Ecosystem</h1>
+                <p>By breaking down the traditional hiring process, we create a step-by-step pipeline. Click a presenter to explore how we train candidates, build careers, and turn social impact into measurable financial returns.</p>
+            </div>
+            
+            <div id="story-grid">
+                
+                <div class="story-item" onclick="event.stopPropagation(); openPanel('panel-housekeeping')" tabindex="0">
+                    <div class="presenter-name-top">Simas</div>
+                    <img src="Simos.jpg" alt="Simas - Story 1">
+                    <div class="story-label">
+                        <p>Part 1 (Housekeeping)</p>
+                        <h3>The Inclusion Ground</h3>
+                    </div>
+                </div>
+
+                <div class="story-item" onclick="event.stopPropagation(); openPanel('panel-staircase')" tabindex="0">
+                    <div class="presenter-name-top">Belle</div>
+                    <img src="Belle.jpg" alt="Belle - Story 2">
+                    <div class="story-label">
+                        <p>Part 2 (Reception/Breakfast)</p>
+                        <h3>The Career Staircase</h3>
+                    </div>
+                </div>
+
+                <div class="story-item" onclick="event.stopPropagation(); openPanel('panel-graduation')" tabindex="0">
+                    <div class="presenter-name-top">Kamilla</div>
+                    <img src="Kamilla.jpg" alt="Kamilla - Story 3">
+                    <div class="story-label">
+                        <p>Part 3 (CV/Reference)</p>
+                        <h3>The Next Step</h3>
+                    </div>
+                </div>
+
+                <div class="story-item" onclick="event.stopPropagation(); openPanel('panel-financials')" tabindex="0">
+                    <div class="presenter-name-top">Ben</div>
+                    <img src="Ben.jpg" alt="Ben - Story 4">
+                    <div class="story-label">
+                        <p>Part 4 (Savings/Contracts)</p>
+                        <h3>The Business Case</h3>
+                    </div>
+                </div>
+
+                <div class="story-item" onclick="event.stopPropagation(); openPanel('panel-kpi')" tabindex="0">
+                    <div class="presenter-name-top">Freja</div>
+                    <img src="Freja.jpg" alt="Freja - Story 5">
+                    <div class="story-label">
+                        <p>Part 5 (Results/Dual-Impact)</p>
+                        <h3>Proven Performance</h3>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="content-panel" id="panel-housekeeping">
+            <div class="panel-image" style="background-image: url('Simos.jpg');"></div>
+            <div class="panel-text">
+                <h2 style="margin-bottom: 5px;">The Training Ground</h2>
+
+                <div class="timeline-container">
+                    <div class="timeline-title">The "Team-Up" Model</div>
+                    <div class="timeline">
+                        <div class="timeline-node historical">
+                            <div class="timeline-year">OsloKollega</div>
+                            <div class="timeline-value">Gives Personal Help (Language, CVs)</div>
+                        </div>
+                        <div class="timeline-node historical">
+                            <div class="timeline-year">The Hotel</div>
+                            <div class="timeline-value">Gives Work Training</div>
+                        </div>
+                        <div class="timeline-node">
+                            <div class="timeline-year">Result</div>
+                            <div class="timeline-value">Safe and Easy Hiring</div>
+                        </div>
+                    </div>
+                </div>
+
+                <p style="font-size: 1.05rem; line-height: 1.4; color: rgba(255,255,255,0.9); margin-bottom: 12px;">Housekeeping is the most important part of a hotel and the best place for beginners to start working.</p>
+                <ul style="list-style: none; padding: 0; margin: 0; font-size: 1.05rem; line-height: 1.4; color: rgba(255,255,255,0.9);">
+                    <li style="margin-bottom: 10px; position: relative; padding-left: 25px;"><strong style="color: white;">Smart Task Sharing:</strong> Trainees do simple, repeating tasks. This gives the experienced staff more time to solve hard problems.</li>
+                    <li style="margin-bottom: 10px; position: relative; padding-left: 25px;"><strong style="color: white;">Easy to Start:</strong> You need to be exact and follow routines. You do not need perfect language skills right away.</li>
+                    <li style="margin-bottom: 10px; position: relative; padding-left: 25px;"><strong style="color: white;">Building Confidence:</strong> It is a safe place for beginners and immigrants to learn how to work in a hotel and practice the language.</li>
+                </ul>
+            </div>
+            <button class="close-panel" onclick="closePanels()">✕</button>
+        </div>
+
+        <div class="content-panel" id="panel-staircase">
+            <div class="panel-image" style="background-image: url('Belle.jpg');"></div>
+            <div class="panel-text">
+                <h2>The Career Ladder</h2>
+
+                <p style="font-size: 1.1rem; line-height: 1.6; color: rgba(255,255,255,0.9); margin-bottom: 20px;">A good system does not keep people in beginner jobs forever; it builds a ladder for them to climb. When trainees are good at housekeeping, they move to jobs where they meet the guests.</p>
+                <ul style="list-style: none; padding: 0; margin: 0; font-size: 1.1rem; line-height: 1.7; color: rgba(255,255,255,0.9);">
+                    <li style="margin-bottom: 15px; position: relative; padding-left: 30px;"><strong style="color: white;">The Breakfast Team:</strong> A great place to learn teamwork and how to work fast. It gives the hotel motivated workers during the busy morning.</li>
+                    <li style="margin-bottom: 15px; position: relative; padding-left: 30px;"><strong style="color: white;">Reception:</strong> The face of the hotel. Grateful and happy trainees give guests a warm welcome, making the hotel experience better.</li>
+                    <li style="margin-bottom: 15px; position: relative; padding-left: 30px;"><strong style="color: white;">A Mixed Team:</strong> It creates a team with different backgrounds, which is perfect for welcoming international guests.</li>
+                </ul>
+            </div>
+            <button class="close-panel" onclick="closePanels()">✕</button>
+        </div>
+
+        <div class="content-panel" id="panel-graduation">
+            <div class="panel-image" style="background-image: url('Kamilla.jpg');"></div>
+            <div class="panel-text">
+                <h2>The Next Step</h2>
+
+                <p style="font-size: 1.1rem; line-height: 1.6; color: rgba(255,255,255,0.9); margin-bottom: 20px;">What happens when the training is over? A successful program makes sure trainees leave ready for the regular working world.</p>
+                
+                <ul style="list-style: none; padding: 0; margin: 0; font-size: 1.1rem; line-height: 1.7; color: rgba(255,255,255,0.9);">
+                    <li style="margin-bottom: 15px; position: relative; padding-left: 30px;"><strong style="color: white;">A Real CV:</strong> The hotel and OsloKollega help write a professional CV and give a verified work reference. This unlocks their future career.</li>
+                    <li style="margin-bottom: 15px; position: relative; padding-left: 30px;"><strong style="color: white;">The Next Job:</strong> The best trainees are offered permanent contracts at this hotel or other Strawberry hotels. Others find good jobs in new companies.</li>
+                    <li style="margin-bottom: 15px; position: relative; padding-left: 30px;"><strong style="color: white;">The Alumni Network:</strong> Successful graduates tell their friends to apply. This gives the hotel a free, endless line of motivated new workers.</li>
+                </ul>
+
+                <div class="highlight-box">
+                    <strong style="color: white; font-size: 1.1rem;">Societal Impact:</strong> We help move people off welfare support and turn them into active, independent taxpayers.
+                </div>
+            </div>
+            <button class="close-panel" onclick="closePanels()">✕</button>
+        </div>
+
+        <div class="content-panel" id="panel-financials">
+            <div class="panel-text">
+                <h2>The Financial Business Case</h2>
+                <p class="panel-subtitle">Estimated annual budget for a mid-sized hotel training 10–15 people. This proves that doing good for society is also highly profitable for the hotel.</p>
+
+                <div class="fin-dashboard">
+                    <div class="fin-column">
+                        <h3>Yearly Investment <span class="total">600k NOK</span></h3>
+                        
+                        <div class="fin-item">
+                            <h4>Staffing & Admin <span>350,000 NOK</span></h4>
+                            <p>Paying senior staff and managers for the extra time they spend teaching the trainees and working with NAV.</p>
+                        </div>
+                        
+                        <div class="fin-item">
+                            <h4>Marketing the Mission <span>150,000 NOK</span></h4>
+                            <p>PR campaigns promoting the hotel's social program to attract new guests who care about the community.</p>
+                        </div>
+
+                        <div class="fin-item">
+                            <h4>Tools & Transition <span>100,000 NOK</span></h4>
+                            <p>Extra uniforms, training software, cleaning supplies, and time spent writing CVs to help them get permanent jobs.</p>
+                        </div>
+                    </div>
+
+                    <div class="fin-column revenue">
+                        <h3>Yearly Returns <span class="total">2.4M NOK</span></h3>
+                        
+                        <div class="fin-item">
+                            <h4>New Business & Bookings <span>1,500,000 NOK</span></h4>
+                            <p>Winning big company meetings because they want socially responsible partners, plus extra bookings from regular conscious consumers.</p>
+                        </div>
+
+                        <div class="fin-item">
+                            <h4>Turnover & Hiring Savings <span>600,000 NOK</span></h4>
+                            <p>Saving massive amounts of money by stopping the use of expensive cleaning agencies and not paying for job ads.</p>
+                        </div>
+
+                        <div class="fin-item">
+                            <h4>NAV Support & Less Waste <span>300,000 NOK</span></h4>
+                            <p>Wage subsidies provided by the government, plus savings on food and energy because trainees strictly follow hotel rules.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="close-panel" onclick="closePanels()">✕</button>
+        </div>
+
+        <div class="content-panel" id="panel-kpi">
+            <div class="panel-text">
+                <h2>Performance KPIs</h2>
+                <p class="panel-subtitle">Tracking our success: how helping people also makes the business more profitable. These numbers prove the system works.</p>
+
+                <div class="kpi-dashboard">
+                    <div class="kpi-column">
+                        <h3>Social Impact Metrics</h3>
+                        
+                        <div class="social-kpi-block">
+                            <div class="progress-label">
+                                <span>Transition to Regular Work</span>
+                                <span><span class="counter" data-target="57">0</span>%</span>
+                            </div>
+                            <div class="progress-bg">
+                                <div class="progress-fill" data-width="57%"></div>
+                            </div>
+                            <p class="explanation">Shows how many trainees get a real, permanent job contract after the program. This proves the hotel is building a strong team, not just giving short-term charity.</p>
+                        </div>
+
+                        <div class="social-kpi-block">
+                            <div class="progress-label">
+                                <span>Graduates with Verified CVs</span>
+                                <span><span class="counter" data-target="100">0</span>%</span>
+                            </div>
+                            <div class="progress-bg">
+                                <div class="progress-fill" data-width="100%"></div>
+                            </div>
+                            <p class="explanation">Shows how many people leave with a real CV and a verified work reference. This proves we are helping beginners start their real careers and become active taxpayers.</p>
+                        </div>
+                    </div>
+
+                    <div class="kpi-column">
+                        <h3>Economic Value Metrics</h3>
+
+                        <div class="kpi-detail-card">
+                            <div class="kpi-value"><span class="counter" data-target="600">0</span><span class="suffix">k</span></div>
+                            <div class="kpi-info">
+                                <h4>Recruitment Savings (NOK)</h4>
+                                <p>Shows the money saved by not using expensive temporary cleaning companies, and not having to pay for job ads when staff quit.</p>
+                            </div>
+                        </div>
+
+                        <div class="kpi-detail-card">
+                            <div class="kpi-value"><span class="counter" data-target="1.5">0</span><span class="suffix">M</span></div>
+                            <div class="kpi-info">
+                                <h4>New ESG Revenue (NOK)</h4>
+                                <p>Shows the new money earned because of the hotel's good reputation. This comes from big company meetings and guests who care about the community.</p>
+                            </div>
+                        </div>
+
+                        <div class="kpi-review-card">
+                            <div class="stars">★★★★★</div>
+                            <div class="review-title">Guest Satisfaction Output</div>
+                            <p>We check online reviews to see if guests mention our friendly and warm staff. Good reviews prove that happy trainees make the hotel experience better for everyone.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="close-panel" onclick="closePanels()">✕</button>
+        </div>
+
+    </div>
+
+    <div id="screen-conclusion" class="presentation-screen slide-bg">
+        <div class="agenda-card">
+            <h2>The Bottom Line</h2>
+            <p>
+                The OsloKollega and Børsparken model proves that social inclusion is not charity—it is a competitive advantage. By treating work inclusion as a training pipeline, we solve hospitality's hiring challenges. We build loyal staff, save millions in recruitment costs, and create a brand that guests want to support.
+            </p>
+        </div>
+        <div class="hint-text">Press Spacebar to Finish</div>
+    </div>
+
+    <div id="screen-end" class="presentation-screen slide-bg">
+        <h1>Thank You!</h1>
+        <h2>"Helping people into work is the smartest business decision we can make."</h2>
+        <div class="hint-text">Press Left Arrow to return</div>
+    </div>
+
+    <script>
+        // --- Fullscreen Logic ---
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch((err) => {
+                    console.warn(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+                fullscreenBtn.innerHTML = '✖';
+                fullscreenBtn.title = 'Exit Fullscreen';
+            } else {
+                fullscreenBtn.innerHTML = '⛶';
+                fullscreenBtn.title = 'Toggle Fullscreen';
+            }
+        });
+
+        // --- Presentation Logic ---
+        const screens = ['screen-intro', 'screen-agenda', 'screen-stories', 'screen-conclusion', 'screen-end'];
+        let currentScreenIndex = 0;
+
+        document.addEventListener('keydown', function(event) {
+            let isPanelActive = document.querySelector('.content-panel.active') !== null;
+
+            if (isPanelActive && (event.key === 'Escape')) {
+                closePanels();
+                return;
+            }
+            
+            if (isPanelActive) return;
+
+            if (event.key === 'ArrowRight' || event.key === ' ') {
+                if (currentScreenIndex < screens.length - 1) {
+                    currentScreenIndex++;
+                    updateScreens();
+                }
+            } else if (event.key === 'ArrowLeft') {
+                if (currentScreenIndex > 0) {
+                    currentScreenIndex--;
+                    updateScreens();
+                }
+            }
+        });
+
+        function updateScreens() {
+            screens.forEach(id => {
+                document.getElementById(id).classList.remove('active-screen');
+            });
+            document.getElementById(screens[currentScreenIndex]).classList.add('active-screen');
+        }
+
+        const viewport = document.getElementById('story-viewport');
+        const panels = document.querySelectorAll('.content-panel');
+
+        function animateCounters(panelId) {
+            const panel = document.getElementById(panelId);
+            
+            const counters = panel.querySelectorAll('.counter');
+            counters.forEach(counter => {
+                counter.innerText = '0';
+                const target = parseFloat(counter.getAttribute('data-target'));
+                const duration = 1500;
+                const steps = 60;
+                const increment = target / steps;
+                let current = 0;
+                
+                const timer = setInterval(() => {
+                    current += increment;
+                    if(current >= target) {
+                        clearInterval(timer);
+                        counter.innerText = target % 1 !== 0 ? target.toFixed(1) : target.toLocaleString();
+                    } else {
+                        counter.innerText = target % 1 !== 0 ? current.toFixed(1) : Math.ceil(current).toLocaleString();
+                    }
+                }, duration / steps);
+            });
+
+            const progressBars = panel.querySelectorAll('.progress-fill');
+            progressBars.forEach(bar => {
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = bar.getAttribute('data-width');
+                }, 100); 
+            });
+        }
+
+        function openPanel(panelId) {
+            panels.forEach(panel => panel.classList.remove('active'));
+            viewport.classList.add('blur');
+            document.getElementById(panelId).classList.add('active');
+            animateCounters(panelId);
+        }
+
+        function closePanels() {
+            viewport.classList.remove('blur');
+            panels.forEach(panel => panel.classList.remove('active'));
+            
+            document.querySelectorAll('.progress-fill').forEach(bar => {
+                bar.style.width = '0%';
+            });
+        }
+
+        viewport.addEventListener('click', function(e) {
+            if (this.classList.contains('blur')) {
+                closePanels();
+            }
+        });
+    </script>
+</body>
+</html>
