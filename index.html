@@ -10,7 +10,7 @@
             --primary: #2c3e50;
             --primary-light: #34495e;
             --accent: #e74c3c;
-            --accent-kpi: #3498db; /* Professional blue for the KPI dashboard */
+            --accent-kpi: #3498db; 
             --accent-dim: rgba(231, 76, 60, 0.3);
             --revenue: #2ecc71; 
             --bg-dark: #121212; 
@@ -473,6 +473,22 @@
             line-height: 1.4 !important;
         }
 
+        /* NEW: Timeframe Badge */
+        .timeframe-badge {
+            display: inline-block;
+            background: rgba(46, 204, 113, 0.2);
+            color: var(--revenue);
+            border: 1px solid var(--revenue);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            align-self: flex-start;
+        }
+
         /* --- KPI DASHBOARD SPECIFIC --- */
         .kpi-dashboard {
             display: grid;
@@ -776,6 +792,7 @@
         <div class="content-panel" id="panel-financials">
             <div class="panel-text">
                 <h2>The Financial Business Case</h2>
+                <div class="timeframe-badge">Matured Program Estimate (Years 4–5)</div>
                 <p class="panel-subtitle">Estimated annual budget for a mid-sized hotel training 10–15 people. This proves that doing good for society is also highly profitable for the hotel.</p>
 
                 <div class="fin-dashboard">
