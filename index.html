@@ -89,6 +89,13 @@
             background-position: center;
         }
 
+        /* NEW: Specific background for the last page */
+        .slide-bg-end {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), url('lastpage.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+
         .presentation-screen h1 {
             font-size: 4.5rem;
             margin-bottom: 20px;
@@ -912,7 +919,7 @@
         <div class="hint-text">Press Spacebar to Finish</div>
     </div>
 
-    <div id="screen-end" class="presentation-screen slide-bg">
+    <div id="screen-end" class="presentation-screen slide-bg-end">
         <h1>Thank You!</h1>
         <h2>"Helping people into work is the smartest business decision we can make."</h2>
         <div class="hint-text">Press Left Arrow to return</div>
